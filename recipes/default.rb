@@ -69,7 +69,7 @@ when 'debian'
   end
 
   # Configure job control
-  if node['rabbitmq']['job_control'] == 'upstart' && node['rabbitmq']['manage_service']
+  if node['rabbitmq']['job_control'] != 'initd' && node['rabbitmq']['manage_service']
     # We start with stock init.d, remove it if we're not using init.d, otherwise leave it alone
     service node['rabbitmq']['service_name'] do
       action [:stop]
@@ -84,12 +84,24 @@ when 'debian'
       action :delete
     end
 
-    template "/etc/init/#{node['rabbitmq']['service_name']}.conf" do
-      source 'rabbitmq.upstart.conf.erb'
-      owner 'root'
-      group 'root'
-      mode 0644
-      variables(:max_file_descriptors => node['rabbitmq']['max_file_descriptors'])
+    if node['rabbitmq']['job_control'] == 'upstart'
+      template "/etc/init/#{node['rabbitmq']['service_name']}.conf" do
+        source 'rabbitmq.upstart.conf.erb'
+        owner 'root'
+        group 'root'
+        mode 0644
+        variables(:max_file_descriptors => node['rabbitmq']['max_file_descriptors'])
+      end
+    elsif node['rabbitmq']['job_control'] == 'systemd'
+      template "/lib/systemd/system/#{node['rabbitmq']['service_name']}.service" do
+        source 'rabbitmq.systemd.service.erb'
+        owner 'root'
+        group 'root'
+        mode 0644
+        variables(:max_file_descriptors => node['rabbitmq']['max_file_descriptors'])
+      end
+    else
+      Chef::Log.fatal "Unable to support subsystem, currently you have selected: #{node['rabbitmq']['job_control']}"
     end
   end
 

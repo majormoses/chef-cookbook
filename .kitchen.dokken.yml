@@ -85,3 +85,13 @@ suites:
                assume_yes: false
                force-yes: false
     excludes: ["centos-6.7", "centos-7.2"]
+  - name: default-systemd
+    run_list:
+      - recipe[rabbitmq::default]
+    attributes:
+      rabbitmq:
+        job_control: systemd
+    excludes:
+      - centos-6.7
+      - ubuntu-14.04
+      - debian-7

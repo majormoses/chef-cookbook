@@ -1,0 +1,26 @@
+# systemd unit example taken from:
+# - https://github.com/rabbitmq/rabbitmq-server/commit/228a78e703b3cf00d546a4a93320616ec52ec2e7#diff-bc10308ed9f9f0d177ebb09adca37edc
+# - https://github.com/rabbitmq/rabbitmq-server/pull/934/files#diff-e213daf093fc4cfa6bd4c13a7470ab9d
+[Unit]
+  Description=RabbitMQ broker
+  After=network.target epmd@0.0.0.0.socket
+  Wants=network.target epmd@0.0.0.0.socket
+
+[Service]
+  Type=notify
+  User=rabbitmq
+  Group=rabbitmq
+  NotifyAccess=all
+  TimeoutStartSec=3600
+  WorkingDirectory=/var/lib/rabbitmq
+  <% case node['platform_family'] %>
+  <% when 'debian' %>
+  ExecStart=/usr/lib/rabbitmq/bin/rabbitmq-server
+  ExecStop=/usr/lib/rabbitmq/bin/rabbitmqctl stop
+  <% when 'rhel', 'fedora' %>
+  ExecStart=/usr/sbin/rabbitmq-server
+  ExecStop=/usr/sbin/rabbitmqctl stop
+  <% end %>
+
+[Install]
+  WantedBy=multi-user.target
